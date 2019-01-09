@@ -13,6 +13,14 @@
           "libraries": [ "dbghelp.lib", "Netapi32.lib", "PsApi.lib", "Ws2_32.lib" ],
           "dll_files": [ "dbghelp.dll", "Netapi32.dll", "PsApi.dll", "Ws2_32.dll" ],
         }],
+        ["OS=='aix'", {
+            "variables": {"real_os_name": "<!(uname -s)",},
+            "conditions": [
+                ['"<(real_os_name)"=="OS400"', {
+                    "libraries": [ "-lutil" ],
+                }],
+            ],
+        }],
       ],
       "defines": [
         'NODEREPORT_VERSION="<!(node -p \"require(\'./package.json\').version\")"'

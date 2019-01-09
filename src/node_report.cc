@@ -34,12 +34,11 @@
 #endif
 // Include execinfo.h for the native backtrace API. The API is unavailable on AIX
 // and on some Linux distributions, e.g. Alpine Linux.
-#if !defined(_AIX) && !(defined(__linux__) && !defined(__GLIBC__))
+#if !(defined(_AIX) && !defined(__PASE__)) && !(defined(__linux__) && !defined(__GLIBC__))
 #include <execinfo.h>
 #endif
 #include <sys/utsname.h>
 #endif
-
 #ifdef __APPLE__
 #include <mach-o/dyld.h>  // _dyld_get_image_name()
 #endif
@@ -641,7 +640,35 @@ void PrintNativeStack(std::ostream& out) {
     }
   }
 }
-#elif _AIX
+#elif defined(__PASE__)
+/*******************************************************************************
+ * Function to print a native stack backtrace - IBM i
+ *
+ ******************************************************************************/
+void PrintNativeStack(std::ostream& out) {
+  out << "\n================================================================================";
+  out << "\n==== Native (PASE) Stack Trace =================================================\n\n";
+  void* frames[512];
+  // Get the native backtrace (array of instruction addresses)
+  const int size = backtrace(frames, arraysize(frames));
+  if (size <= 0) {
+    out << "Native backtrace failed, error " << size << "\n";
+    return;
+  } else if (size <=2) {
+    out << "No frames to print\n";
+    return;
+  }
+  char** symbols = backtrace_symbols(frames, size);
+  if (nullptr == symbols) {
+    out << " ERROR: backtrace_symbols() returned no data\n\n";
+    return;
+  }
+  for (int i = 0; i < size; ++i) {
+    out << frames[i] << std::endl;
+  }
+
+}
+#elif defined(_AIX)
 /*******************************************************************************
  * Function to print a native stack backtrace - AIX
  *
